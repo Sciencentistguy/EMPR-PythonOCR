@@ -1,11 +1,13 @@
-from PIL import Image
-from PIL import ImageOps
-import numpy as np
+import pickle
 import sys
+from math import floor
+
+import numpy as np
+from PIL import Image
 
 
 def grayscale_to_monochrome(image: Image) -> Image:
-    array_grayscale = np.asfarray(image)
+    array_grayscale = np.asarray(image)
     array_monochrome = np.zeros((image.size[1], image.size[0]))
     for x in range(image.size[0]):
         for y in range(image.size[1]):
@@ -13,8 +15,28 @@ def grayscale_to_monochrome(image: Image) -> Image:
     return Image.fromarray(array_monochrome)
 
 
+def crop_unneeded(image: Image) -> Image:
+    array = np.asarray(image)
+    maxX = maxY = 0
+    minX = image.size[0]
+    minY = image.size[1]
+    for x in range(image.size[0]):
+        for y in range(image.size[1]):
+            if array[y, x] == 0:
+                minX = x if x < minX else minX
+                maxX = x if x > maxX else maxX
+                minY = y if y < minY else minY
+                maxY = y if y > maxY else maxY
+    array_cropped = np.zeros((maxY-minY, maxX-minX))
+    for x in range(minX, maxX):
+        for y in range(minY, maxY):
+            array_cropped[y-minY, x-minX] = array[y, x]
+    return Image.fromarray(array_cropped)
+
+
 image = Image.open(sys.argv[1]).convert("L")
-image.show()
 bw = grayscale_to_monochrome(image)
-bw.show()
+cropped = crop_unneeded(bw)
+result = ocr(cropped)
+print(f"{result[0]}: {result[1]}% confidence.")
 print("Didn't Crash")
