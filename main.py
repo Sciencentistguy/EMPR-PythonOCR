@@ -53,6 +53,33 @@ def import_pngs():
         dc[character] = character_image
     pickle.dump(dc, open("alphabet.pkl", "wb"))
 
+
+def ocr(image: Image) -> (str, int):
+    image_array = np.asarray(image)
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    reference_images = pickle.load(open("alphabet.pkl", "rb"))
+    current_guess = None
+    current_guess_confidence = 0
+    current_guess_size = 1
+    for character in alphabet:
+        for rotation in range(0, 360, 90):
+            rotated_reference_image = reference_images[character].rotate(rotation, 0, 1)
+            reference_array = np.asarray(rotated_reference_image)
+            reference_array = scale_keeping_aspect(reference_array, image.size[1])
+            if image.size[0]-1 <= len(reference_array[0]) <= image.size[0]+1:
+                confidence = 0
+                for x in range(image.size[0]-1):
+                    for y in range(image.size[1]-1):
+                        if image_array[y, x] == reference_array[y, x]:
+                            confidence += 1
+                if confidence > current_guess_confidence:
+                    current_guess_confidence = confidence
+                    current_guess = character
+                    current_guess_size = rotated_reference_image.size[0] * rotated_reference_image.size[1]
+    current_guess_confidence_pct = round(100 * current_guess_confidence / current_guess_size)
+    return current_guess, current_guess_confidence_pct
+
+
 if "--import" in sys.argv:
     import_pngs()
     exit()
