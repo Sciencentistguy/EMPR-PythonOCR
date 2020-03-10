@@ -42,6 +42,21 @@ def scale_keeping_aspect(array: np.array, height: int) -> np.array:
         for y in range(height):
             scaled_array[y, x] = array[int(floor(scale * y)), int(floor(scale*x))]
     return scaled_array
+
+
+def import_pngs():
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    dc = {}
+    for character in alphabet:
+        filename = character + ".png"
+        character_image = crop_unneeded(grayscale_to_monochrome(Image.open(filename).convert("L")))
+        dc[character] = character_image
+    pickle.dump(dc, open("alphabet.pkl", "wb"))
+
+if "--import" in sys.argv:
+    import_pngs()
+    exit()
+
 image = Image.open(sys.argv[1]).convert("L")
 bw = grayscale_to_monochrome(image)
 cropped = crop_unneeded(bw)
